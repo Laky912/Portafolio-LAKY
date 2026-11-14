@@ -61,19 +61,20 @@ body.pointer-active .pointer-aura{opacity:1}
 /* Cosmic black-hole background */
 .cosmos-bg{position:fixed;inset:0;z-index:0;overflow:hidden;pointer-events:none;background:radial-gradient(ellipse at 50% 48%,#10182a 0%,#080b12 58%,#05070c 100%)}
 .cosmos-bg:before{content:"";position:absolute;inset:0;background-image:radial-gradient(1px 1px at 12% 22%,#d8f7ff99 50%,transparent 100%),radial-gradient(1px 1px at 78% 18%,#b8d5ff99 50%,transparent 100%),radial-gradient(1px 1px at 34% 76%,#ffffff88 50%,transparent 100%),radial-gradient(2px 2px at 88% 68%,#a7d9ff88 50%,transparent 100%),radial-gradient(1px 1px at 61% 88%,#ffffff88 50%,transparent 100%);background-size:390px 310px;opacity:.65}
-.blackhole-scene{position:absolute;width:min(72vw,760px);height:min(72vw,760px);min-width:390px;min-height:390px;left:50%;top:47%;transform:translate(-50%,-50%);transform-style:preserve-3d;perspective:1000px;opacity:.57;filter:saturate(1.18)}
+.blackhole-scene{position:absolute;animation:blackHoleDrift 9s ease-in-out infinite;width:min(72vw,760px);height:min(72vw,760px);min-width:390px;min-height:390px;left:50%;top:47%;transform:translate(-50%,-50%);transform-style:preserve-3d;perspective:1000px;opacity:.57;filter:saturate(1.18)}
 .blackhole-core{position:absolute;width:34%;height:34%;left:33%;top:33%;border-radius:50%;background:radial-gradient(circle at 38% 34%,#03040a 0 48%,#000 70%);box-shadow:0 0 35px 16px #000,0 0 75px 22px #4d75b455,0 0 125px 35px #6ce8db22;z-index:3}
 .blackhole-lens{position:absolute;inset:25%;border-radius:50%;border:2px solid #d8ffffaa;box-shadow:0 0 12px #c5ffff,0 0 34px #66e3d2,0 0 70px #638dff88;transform:rotateX(72deg) scaleY(.68);z-index:4;animation:lensPulse 5s ease-in-out infinite}
 .accretion{position:absolute;left:4%;top:27%;width:92%;height:46%;border-radius:50%;transform:rotateX(72deg) rotateZ(-18deg);border:22px solid transparent;border-top-color:#f3e3c6;border-bottom-color:#6be9e0;border-left-color:#b6a0ff;border-right-color:#ff9b70;filter:drop-shadow(0 0 12px #8df9f0) drop-shadow(0 0 30px #687fff);z-index:2;animation:diskSpin 17s linear infinite}
 .accretion:after{content:"";position:absolute;inset:-19px;border-radius:50%;border:8px solid transparent;border-top-color:#fff;border-bottom-color:#6be9e0;filter:blur(8px);opacity:.8}
 .accretion-back{position:absolute;left:7%;top:30%;width:86%;height:40%;border-radius:50%;transform:rotateX(72deg) rotateZ(162deg);border:14px solid transparent;border-top-color:#a4aaff;border-bottom-color:#ffb17d;filter:blur(5px) drop-shadow(0 0 20px #728dff);z-index:1;animation:diskSpin 24s linear infinite reverse}
 .cosmos-vignette{position:absolute;inset:0;background:radial-gradient(ellipse at 50% 48%,transparent 0%,#080b1266 55%,#080b12e8 100%)}
-.meteor-canvas{position:absolute;inset:0;width:100%;height:100%;opacity:.9}
+.meteor-canvas{position:absolute;inset:0;width:100%;height:100%;opacity:.9;pointer-events:none}
+@keyframes blackHoleDrift{0%,100%{translate:0 0;scale:1}50%{translate:0 -10px;scale:1.018}}
 @keyframes diskSpin{to{transform:rotateX(72deg) rotateZ(342deg)}}
 @keyframes lensPulse{50%{filter:brightness(1.5);box-shadow:0 0 20px #fff,0 0 48px #66e3d2,0 0 90px #638dff}}
-main,.footer{position:relative;z-index:1}.hero{background:linear-gradient(90deg,#080b12a8,transparent 75%)}.section{background:linear-gradient(180deg,#080b12a8,#080b12d9)}.contact{background:radial-gradient(ellipse at 50% 100%,#16423e44,transparent 60%),linear-gradient(180deg,#080b12c9,#080b12e8)}
+main,.footer{position:relative;z-index:2}.cosmos-bg{z-index:0}.topbar{z-index:10}.noise{z-index:5}.hero{background:linear-gradient(90deg,#080b12a8,transparent 75%);position:relative;z-index:2}.section{background:linear-gradient(180deg,#080b12b8,#080b12e8);position:relative;z-index:2}.contact{background:radial-gradient(ellipse at 50% 100%,#16423e44,transparent 60%),linear-gradient(180deg,#080b12d0,#080b12ed);position:relative;z-index:2}
 @media(max-width:700px){.blackhole-scene{left:55%;top:34%;opacity:.34;min-width:340px;min-height:340px}.accretion{border-width:14px}.accretion-back{border-width:9px}}
-@media(prefers-reduced-motion:reduce){.accretion,.accretion-back,.blackhole-lens{animation:none!important}.meteor-canvas{display:none}}
+@media(prefers-reduced-motion:reduce){.accretion,.accretion-back,.blackhole-lens,.blackhole-scene{animation:none!important}.meteor-canvas{display:none}}
 
 </style>
 </head>
@@ -107,11 +108,14 @@ main,.footer{position:relative;z-index:1}.hero{background:linear-gradient(90deg,
 <script>
 document.getElementById('year').textContent=new Date().getFullYear();
 
-/* Meteors + subtle 3D parallax for the cosmic background */
+
+
+
+const reduceMotion=window.matchMedia('(prefers-reduced-motion: reduce)').matches;
+/* Falling meteor animation */
 const meteorCanvas=document.getElementById('meteor-canvas'),meteorCtx=meteorCanvas&&meteorCanvas.getContext('2d');
-const blackholeScene=document.getElementById('blackhole-scene');
 if(!reduceMotion && meteorCtx){
- let mw=0,mh=0,meteors=[],meteorRAF=0,lastMeteor=0,mouseX=0,mouseY=0;
+ let mw=0,mh=0,meteors=[],meteorRAF=0,lastMeteor=0;
  function sizeMeteors(){const dpr=Math.min(devicePixelRatio||1,1.5);mw=innerWidth;mh=innerHeight;meteorCanvas.width=mw*dpr;meteorCanvas.height=mh*dpr;meteorCtx.setTransform(dpr,0,0,dpr,0,0);meteors=[]}
  function spawnMeteor(){const fromTop=Math.random()>.22;const x=fromTop?Math.random()*mw:mw+20;const y=fromTop?-30:Math.random()*mh*.65;const speed=3+Math.random()*5;meteors.push({x,y,vx:-speed*(.45+Math.random()*.45),vy:speed*(.7+Math.random()*.7),len:45+Math.random()*105,width:.7+Math.random()*1.5,life:0,max:65+Math.random()*65,glow:Math.random()>.55})}
  function drawMeteors(now){meteorCtx.clearRect(0,0,mw,mh);if(now-lastMeteor>360+Math.random()*600&&meteors.length<19){spawnMeteor();lastMeteor=now}
@@ -119,11 +123,7 @@ if(!reduceMotion && meteorCtx){
   meteorRAF=requestAnimationFrame(drawMeteors)}
  sizeMeteors();drawMeteors(0);
  window.addEventListener('resize',()=>{cancelAnimationFrame(meteorRAF);sizeMeteors();drawMeteors(0)},{passive:true});
- window.addEventListener('pointermove',e=>{mouseX=(e.clientX/innerWidth-.5);mouseY=(e.clientY/innerHeight-.5);if(blackholeScene)blackholeScene.style.transform='translate(calc(-50% + '+mouseX*18+'px),calc(-50% + '+mouseY*14+'px)) rotateY('+mouseX*5+'deg) rotateX('+(-mouseY*4)+'deg)'},{passive:true});
 }
-
-
-const reduceMotion=window.matchMedia('(prefers-reduced-motion: reduce)').matches;
 const progress=document.getElementById('scroll-progress'),backTop=document.getElementById('back-top');
 let scrollTick=false;
 function updateScroll(){
